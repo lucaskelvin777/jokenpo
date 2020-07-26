@@ -1,4 +1,5 @@
 import {createGlobalStyle} from 'styled-components';
+
 export default createGlobalStyle`
   *{
     margin: 0;
@@ -7,10 +8,8 @@ export default createGlobalStyle`
   }
   html{
     min-height:100%;
-    background: #3498db;
-    color:#00000099;
-    
-    
+    background: ${props=>props.theme.colorPrimary};
+    color:${props=>props.theme.colorBlack};
   }
   hr{
     border-color:#00000099;
