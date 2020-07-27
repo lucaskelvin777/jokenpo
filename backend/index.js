@@ -6,6 +6,6 @@ const server = require('http').createServer(app);
 webSocket(server);
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended:false}));
-server.listen(5000, () => {
+server.listen(5050, () => {
   console.log('Server iniciado!');
 })

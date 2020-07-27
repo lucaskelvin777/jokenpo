@@ -9,7 +9,7 @@ import {
 import socketIOClient from "socket.io-client";
 
 import { jokenpo, verify } from '../constraints/types';
-const socket = socketIOClient('http://localhost:5000');
+const socket = socketIOClient('http://localhost:5050');
 const App = () => {
   const [myChoose, setMyChoose] = useState(null);
   const [chooseAdversary, setChooseAdversary] = useState(null);
@@ -21,7 +21,7 @@ const App = () => {
   function setMyPlay(number) {
     if (!played) {
       setMyChoose(number);
-      socket.emit('jogada', { escolha: number });
+      socket.emit('play', { escolha: number });
       setPlayed(true);
     }
 
@@ -37,25 +37,25 @@ const App = () => {
     
   }
   function searchRoom() {
-    socket.emit('procurando_sala', {});
+    socket.emit('searching_room', {});
   }
 
   useEffect(() => {
     searchRoom();
-    socket.on('procurando_outro_jogador', () => {
+    socket.on('searching_other_player', () => {
       clean(false);
     });
-    socket.on('fim_procura_outro_jogador', () => {
+    socket.on('end_search_other_player', () => {
       setSearchingOtherPlayer(false);
     });
-    socket.on('sala_encontrada', () => {
+    socket.on('searched_room', () => {
       setSearchingRoom(false);
       
     });
-    socket.on('outro_jogador_jogou', () => {
+    socket.on('other_player_played', () => {
 
     })
-    socket.on('fim_jogo', (data) => {
+    socket.on('end_game', (data) => {
       console.log(data);
       setPlayed(true);
       setEndGame(true);
