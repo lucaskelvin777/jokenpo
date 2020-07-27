@@ -5,45 +5,81 @@ import {
   ImageGame, ImageGameChoose, ImageGameChooseBox, BoxManyImages,
   TitleBox
 } from './../components';
+
+import socketIOClient from "socket.io-client";
+
 import { jokenpo, verify } from '../constraints/types';
+const socket = socketIOClient('http://localhost:5000');
 const App = () => {
   const [myChoose, setMyChoose] = useState(null);
   const [chooseAdversary, setChooseAdversary] = useState(null);
   const [result, setResult] = useState('');
   const [played, setPlayed] = useState(false);
-  function randomPlay() {
-    let number = Math.random() * 3;
-    number = parseInt(number);
-    setChooseAdversary(number);
-  }
+  const [searchingRoom, setSearchingRoom] = useState(true);
+  const [searchingOtherPlayer, setSearchingOtherPlayer] = useState(true);
+  const [endGame, setEndGame] = useState(false);
   function setMyPlay(number) {
-    setMyChoose(number);
-    randomPlay();
-    setPlayed(true);
+    if (!played) {
+      setMyChoose(number);
+      socket.emit('jogada', { escolha: number });
+      setPlayed(true);
+    }
+
   }
-  function clean() {
+  function clean(room = true) {
     setResult('');
     setChooseAdversary(null);
     setMyChoose(null);
     setPlayed(false);
+    setSearchingOtherPlayer(true);
+    if(room)
+      setSearchingRoom(true);
+    
+  }
+  function searchRoom() {
+    socket.emit('procurando_sala', {});
   }
 
   useEffect(() => {
-    if (chooseAdversary !== null && myChoose !== null) {
-      let result = verify(myChoose, chooseAdversary);
-      if (result === 1) {
-        setResult('Jogador 1 ganhou!');
-      } else if (result === 2) {
-        setResult('Jogador 2 ganhou!');
-      } else {
-        setResult('Empate');
-      }
-    }
-  }, [chooseAdversary, myChoose]);
+    searchRoom();
+    socket.on('procurando_outro_jogador', () => {
+      clean(false);
+    });
+    socket.on('fim_procura_outro_jogador', () => {
+      setSearchingOtherPlayer(false);
+    });
+    socket.on('sala_encontrada', () => {
+      setSearchingRoom(false);
+      
+    });
+    socket.on('outro_jogador_jogou', () => {
+
+    })
+    socket.on('fim_jogo', (data) => {
+      console.log(data);
+      setPlayed(true);
+      setEndGame(true);
+      setChooseAdversary(data.escolhaAdversario);
+      setResult(data.resultadoEscrito);
+    });
+  }, []);
+  if (searchingRoom || searchingOtherPlayer) {
+    return (
+      <>
+        <Layout>
+          <Box>
+            {searchingRoom ? <p>Procurando uma sala!</p> : ''}
+            {searchingOtherPlayer && !searchingRoom ? <p>Procurando outro jogador!</p> : ''}
+          </Box>
+        </Layout>
+      </>
+    )
+  }
+
   return (
     <>
       <Layout>
-        
+
         <Box>
           <TitleBox>
             <h2>Jokenpo</h2>
@@ -97,10 +133,12 @@ const App = () => {
                 <p>Tesoura</p>
               </ImageGameChooseBox>
             </BoxManyImages>
-            :
-            <BoxButton>
-              <ButtonSmall onClick={clean}>Jogar novamente</ButtonSmall>
-            </BoxButton>
+            : (endGame) ?
+              <BoxButton>
+                <ButtonSmall onClick={()=>{clean(); searchRoom();}}>Jogar novamente</ButtonSmall>
+              </BoxButton> :
+              <p>Aguarde outro jogador está jogando!</p>
+
           }
         </Box>
       </Layout>

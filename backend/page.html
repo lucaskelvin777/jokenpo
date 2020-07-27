@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Documento</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
+</head>
+
+<body>
+  <div id="messages">
+
+  </div>
+  <script>
+    let socket = io('http://localhost:3000');
+    socket.on('change_data', (data) => {
+      if(!data){
+        return;
+      }
+      $('#messages').children().remove();
+      data.forEach(element => {
+        $('#messages').append("<p>Produto:"+element.name+", Valor:"+element.price+"</p>");
+      });
+    }); 
+  </script>
+
+</body>
+
+</html>
