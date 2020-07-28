@@ -37,4 +37,23 @@ function getResultString(result, client) {
   }
   return string;
 }
-module.exports = { verifyPlayed, getResultString }
+
+function getResultWithName(result, nameClient1, nameClient2){
+  let string = "";
+  switch (result) {
+    case 1:
+      string = nameClient1+ " Ganhou!";
+      break;
+    case 2:
+      string = nameClient2+ " Ganhou!";
+      break;
+    case 3:
+      string = "Empate";
+      break;
+      default: 
+      string = "Fora de padrão";
+      break;
+  }
+  return string;
+}
+module.exports = { verifyPlayed, getResultString, getResultWithName }

@@ -2,28 +2,30 @@ let io;
 let salas = [
   {
     pessoas: 0,
-    escolhaClient1: null,
-    escolhaClient2: null,
+    chooseClient1: null,
+    chooseClient2: null,
     client1: null,
-    client2: null
+    client2: null,
+    nameClient1: null,
+    nameClient2: null
   }
 ];
-let { verifyPlayed, getResultString } = require('./rules');
+let { verifyPlayed, getResultString, getResultWithName } = require('./rules');
 const webSocket = (server) => {
   io = require('socket.io')(server);
   io.on('connection', (socket) => {
-    socket.on('play', ({ escolha }) => {
+    socket.on('play', ({ choose }) => {
       salas.forEach(element => {
         if (element.client1 === socket.id) {
-          if (element.escolhaClient1 === null) {
-            element.escolhaClient1 = escolha;
-            if (element.client2 !== null && element.escolhaClient2 === null)
+          if (element.chooseClient1 === null) {
+            element.chooseClient1 = choose;
+            if (element.client2 !== null && element.chooseClient2 === null)
               io.to(element.client2).emit("other_player_played", { status: true });
           }
         } else if (element.client2 === socket.id) {
-          if (element.escolhaClient2 === null) {
-            element.escolhaClient2 = escolha;
-            if (element.client1 !== null && element.escolhaClient1 === null)
+          if (element.chooseClient2 === null) {
+            element.chooseClient2 = choose;
+            if (element.client1 !== null && element.chooseClient1 === null)
               io.to(element.client1).emit("other_player_played", { status: true });
           }
         }
@@ -37,10 +39,14 @@ const webSocket = (server) => {
         if (element.client1 === socket.id || element.client2 === socket.id) {
           if (element.client1 === socket.id) {
             element.client1 = null;
+            element.nameClient1 = null;
+            element.chooseClient1 = null;
             io.to(element.client2).emit("searching_other_player", { status: true });
           }
           if (element.client2 === socket.id) {
             element.client2 = null;
+            element.nameClient2 = null;
+            element.chooseClient2 = null;
             io.to(element.client1).emit("searching_other_player", { status: true });
           }
           element.pessoas -= 1;
@@ -48,14 +54,15 @@ const webSocket = (server) => {
         }
       });
     })
-    socket.on('searching_room', () => {
+    socket.on('searching_room', ({ name }) => {
       let searched = false;
       salas.forEach(element => {
-        if (element !== null && element.pessoas < 2) {
+        if (element !== null && element.people < 2) {
           if (element.client1 === null) {
             searched = true;
             element.client1 = socket.id;
-            element.pessoas += 1;
+            element.nameClient1 = name;
+            element.people += 1;
             if (element.client2 === null) {
               io.to(element.client1).emit("searching_other_player", { status: true });
             } else {
@@ -65,7 +72,8 @@ const webSocket = (server) => {
           } else if (element.client2 === null) {
             searched = true;
             element.client2 = socket.id;
-            element.pessoas += 1;
+            element.people += 1;
+            element.nameClient2 = name;
             if (element.client1 !== null) {
               io.to(element.client2).emit("end_search_other_player", { status: true });
               io.to(element.client1).emit("end_search_other_player", { status: true });
@@ -80,9 +88,9 @@ const webSocket = (server) => {
       }
       if (!searched) {
         salas.push({
-          pessoas: 1, client1: socket.id,
-          escolhaClient1: null, escolhaClient2: null
-          , client2: null
+          people: 1, client1: socket.id,
+          chooseClient1: null, chooseClient2: null
+          , client2: null, nameClient1: name, nameClient2: null
         })
         io.to(socket.id).emit("searched_room", { status: true });
 
@@ -95,17 +103,17 @@ const verify = (id) => {
   let searched = false;
   salas.forEach(element => {
     if (element.client1 === id || element.client2 === id) {
-      if (element.escolhaClient1 !== null && element.escolhaClient2 !== null) {
-        let result = verifyPlayed(element.escolhaClient1, element.escolhaClient2);
-        let resultado = result;
+      if (element.chooseClient1 !== null && element.chooseClient2 !== null) {
+        let result = verifyPlayed(element.chooseClient1, element.chooseClient2);
+        console.log(element);
         io.to(element.client1).emit("end_game", {
-          escolhaAdversario: element.escolhaClient2,
-          resultado, resultadoEscrito: getResultString(resultado, 1)
+          chooseAdversary: element.chooseClient2,
+          result, resultWrited: getResultString(result, 1), resultNamed: getResultWithName(result, element.nameClient1, element.nameClient2)
         });
         io.to(element.client2).emit("end_game",
           {
-            escolhaAdversario: element.escolhaClient1,
-            resultado, resultadoEscrito: getResultString(resultado, 2)
+            chooseAdversary: element.chooseClient1,
+            result, resultWrited: getResultString(result, 2), resultNamed: getResultWithName(result, element.nameClient1, element.nameClient2)
           });
         searched = true;
       }
