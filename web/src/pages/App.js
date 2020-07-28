@@ -21,7 +21,7 @@ const App = () => {
   function setMyPlay(number) {
     if (!played) {
       setMyChoose(number);
-      socket.emit('play', { escolha: number });
+      socket.emit('play', { choose: number });
       setPlayed(true);
     }
 
@@ -37,7 +37,8 @@ const App = () => {
     
   }
   function searchRoom() {
-    socket.emit('searching_room', {});
+    let name = localStorage.getItem('name');
+    socket.emit('searching_room', {name});
   }
 
   useEffect(() => {
@@ -57,10 +58,10 @@ const App = () => {
     })
     socket.on('end_game', (data) => {
       console.log(data);
-      setPlayed(true);
-      setEndGame(true);
-      setChooseAdversary(data.escolhaAdversario);
-      setResult(data.resultadoEscrito);
+       setPlayed(true);
+       setEndGame(true);
+      setChooseAdversary(data.chooseAdversary);
+      setResult(data.resultNamed);
     });
   }, []);
   if (searchingRoom || searchingOtherPlayer) {
